@@ -13,7 +13,11 @@ function App() {
   const text = {
     en: {
       title: "Smart Crop Assistant",
-      subtitle: "AI + IoT Powered Farming",
+      subtitle: "AI + Powered Farming",
+      welcome1:
+        "Empowering farmers with AI-driven insights for smarter crop decisions.",
+      welcome2:
+        "Get accurate recommendations, yield predictions, and voice-enabled assistance.",
       location: "Enter Location",
       detect: "📍 Detect",
       soil: "Select Soil Type",
@@ -24,7 +28,11 @@ function App() {
     },
     hi: {
       title: "स्मार्ट फसल सहायक",
-      subtitle: "एआई + आईओटी आधारित खेती",
+      subtitle: "एआई आधारित खेती",
+      welcome1:
+        "किसानों को स्मार्ट निर्णय लेने के लिए AI आधारित सुझाव प्रदान करता है।",
+      welcome2:
+        "फसल सुझाव, उत्पादन पूर्वानुमान और वॉइस सहायता एक ही प्लेटफॉर्म पर।",
       location: "स्थान दर्ज करें",
       detect: "📍 लोकेशन",
       soil: "मिट्टी चुनें",
@@ -52,7 +60,9 @@ function App() {
 
   const detectLocation = () => {
     navigator.geolocation.getCurrentPosition((pos) => {
-      const coords = `${pos.coords.latitude.toFixed(3)}, ${pos.coords.longitude.toFixed(3)}`;
+      const coords = `${pos.coords.latitude.toFixed(
+        3
+      )}, ${pos.coords.longitude.toFixed(3)}`;
       setLocation(coords);
     });
   };
@@ -76,12 +86,13 @@ function App() {
     <div>
       {/* NAVBAR */}
       <nav className="navbar">
-        <div className="logo">🌾 KARM </div>
+        <div className="logo">KARM</div>
 
         <div className="nav-center">
           <span>Home</span>
           <span>Features</span>
           <span>About</span>
+          <span>Contact</span>
         </div>
 
         <button
@@ -99,14 +110,15 @@ function App() {
       >
         <div className="overlay">
           <h1>{text[lang].title}</h1>
-          <p>{text[lang].subtitle}</p>
+          <p className="subtitle">{text[lang].subtitle}</p>
 
-          {/* SIDE-BY-SIDE INPUT + OUTPUT */}
+          {/* NEW WELCOME TEXT */}
+          <p className="welcome">{text[lang].welcome1}</p>
+          <p className="welcome small">{text[lang].welcome2}</p>
+
           <div className="main-layout">
-
-            {/* INPUT CARD */}
-            <div className="hero-form">
-
+            {/* INPUT */}
+            <div className="hero-form card">
               <div className="location-row">
                 <input
                   placeholder={text[lang].location}
@@ -137,40 +149,49 @@ function App() {
               <button className="main-btn" onClick={handleSubmit}>
                 {text[lang].button}
               </button>
-
             </div>
 
-            {/* OUTPUT CARD */}
+            {/* OUTPUT */}
             {showResult && (
-              <div className="result-side">
-
+              <div className="result-side card">
                 <h2>{text[lang].result}</h2>
 
                 <div className="result-grid">
-
                   {sensor && (
-                    <div className="card">
-                      <h3>Sensor</h3>
-                      <p>🌡 {sensor.temp}°C</p>
+                    <div className="card small-card">
+                      <h3>🌡️ Sensor</h3>
+                      <p>{sensor.temp}°C</p>
                       <p>💧 {sensor.moisture}%</p>
-                      <p>🧪 pH {sensor.ph}</p>
+                      <p>pH {sensor.ph}</p>
                     </div>
                   )}
 
                   <div className="card highlight">
-                    <h3>{result}</h3>
+                    <h3 className="crop">{result}</h3>
                     <p>{text[lang].soil}: {soil}</p>
                     <p>📍 {location}</p>
                   </div>
-
                 </div>
               </div>
             )}
-
           </div>
-
         </div>
       </section>
+
+      {/* FOOTER */}
+      <footer className="footer">
+        <h2>KARM</h2>
+        <p>AI-powered crop advisory system for smarter farming decisions.</p>
+
+        <div className="footer-links">
+          <span>Home</span>
+          <span>Features</span>
+          <span>About</span>
+          <span>Contact</span>
+        </div>
+
+        <p className="copy">© 2026 KARM. All rights reserved.</p>
+      </footer>
     </div>
   );
 }

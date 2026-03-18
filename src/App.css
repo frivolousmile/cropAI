@@ -1,6 +1,7 @@
 body {
   margin: 0;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: "Poppins", sans-serif;
+  background: #020617;
 }
 
 /* NAVBAR */
@@ -8,23 +9,24 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px 40px;
+  padding: 15px 60px;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(12px);
   color: white;
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: 1000;
 }
 
 .logo {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: bold;
+  color: #22c55e;
 }
 
 .nav-center {
   display: flex;
-  gap: 25px;
+  gap: 30px;
 }
 
 .nav-center span {
@@ -33,109 +35,164 @@ body {
 }
 
 .nav-center span:hover {
-  color: #00e676;
+  color: #22c55e;
 }
 
 .lang-btn {
-  background: linear-gradient(45deg, #00e676, #00c853);
-  color: black;
-  font-weight: bold;
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  border: none;
   padding: 10px 20px;
   border-radius: 20px;
   cursor: pointer;
+  color: white;
 }
 
 /* HERO */
 .hero {
-  height: 100vh;
+  min-height: 100vh;
   background-size: cover;
   background-position: center;
 }
 
-/* OVERLAY */
 .overlay {
-  height: 100%;
-  background: rgba(0,0,0,0.65);
+  min-height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   color: white;
+  padding: 40px 20px;
 }
 
-/* MAIN LAYOUT */
+h1 {
+  font-size: 3rem;
+  margin-bottom: 5px;
+}
+
+.subtitle {
+  opacity: 0.8;
+}
+
+.welcome {
+  margin-top: 10px;
+  max-width: 600px;
+  text-align: center;
+}
+
+.welcome.small {
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+/* LAYOUT */
 .main-layout {
   display: flex;
-  gap: 40px;
-  margin-top: 30px;
+  gap: 50px;
+  margin-top: 40px;
   flex-wrap: wrap;
   justify-content: center;
-  align-items: flex-start;
 }
 
-/* INPUT CARD */
-.hero-form {
-  background: rgba(255,255,255,0.1);
+/* GLASS CARD */
+.card {
+  background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(12px);
-  padding: 25px;
   border-radius: 20px;
+  padding: 25px;
+  border: 1px solid rgba(255,255,255,0.1);
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+/* FORM */
+.hero-form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 15px;
   width: 320px;
 }
 
-/* LOCATION */
 .location-row {
   display: flex;
   gap: 10px;
 }
 
-/* INPUT */
 input, select, button {
   padding: 12px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: none;
+  outline: none;
 }
 
-/* BUTTON */
-.main-btn {
-  background: #00e676;
-  font-weight: bold;
+button {
   cursor: pointer;
 }
 
+/* MAIN BUTTON */
+.main-btn {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  font-weight: bold;
+}
+
 .main-btn:hover {
-  background: #00c853;
+  transform: scale(1.05);
 }
 
 /* RESULT */
 .result-side {
-  background: rgba(255,255,255,0.08);
-  backdrop-filter: blur(12px);
-  padding: 25px;
-  border-radius: 20px;
   min-width: 320px;
+  text-align: center;
 }
 
-/* RESULT GRID */
 .result-grid {
   display: flex;
   gap: 20px;
-  margin-top: 15px;
+  margin-top: 20px;
   flex-wrap: wrap;
   justify-content: center;
 }
 
-/* CARD */
-.card {
-  padding: 20px;
-  border-radius: 15px;
-  background: rgba(255,255,255,0.1);
+.small-card {
   min-width: 140px;
 }
 
-/* HIGHLIGHT */
 .highlight {
-  border: 2px solid #00e676;
+  border: 2px solid #22c55e;
+}
+
+.crop {
+  font-size: 1.5rem;
+  color: #22c55e;
+}
+
+/* FOOTER */
+.footer {
+  background: #020617;
+  text-align: center;
+  padding: 40px 20px;
+  color: #9ca3af;
+}
+
+.footer h2 {
+  color: #22c55e;
+}
+
+.footer-links {
+  margin: 15px 0;
+}
+
+.footer-links span {
+  margin: 0 10px;
+  cursor: pointer;
+}
+
+.footer-links span:hover {
+  color: #22c55e;
+}
+
+.copy {
+  font-size: 0.8rem;
 }
