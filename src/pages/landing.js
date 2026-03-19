@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "../App.css";
+import heroImage from "./hero.jpeg"; // ✅ your image
 
 function Landing() {
   return (
@@ -27,7 +28,14 @@ function Landing() {
       </div>
 
       {/* RIGHT SIDE */}
-      <div className="premium-right">
+      <div
+        className="premium-right"
+        style={{
+          backgroundImage: `url(${heroImage})`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
         <div className="premium-card">
           <h2>Welcome to KARM</h2>
 
@@ -35,13 +43,8 @@ function Landing() {
             Get Started
           </Link>
 
-          <button className="btn-secondary">
-            Login
-          </button>
-
-          <button className="btn-secondary">
-            Sign Up
-          </button>
+          <button className="btn-secondary">Login</button>
+          <button className="btn-secondary">Sign Up</button>
         </div>
       </div>
 
