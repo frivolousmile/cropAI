@@ -128,7 +128,8 @@ const Home = ({ lang }) => {
       fontFamily: '"Helvetica Neue", Arial, sans-serif', lineHeight: 1.6, color: '#333',
       background: '#f5f7fa'
     }}>
-      {/* HEADER - Government style */}
+
+      {/* HEADER */}
       <div style={{
         background: 'linear-gradient(90deg, #0f4c23 0%, #1a5f2e 50%, #0f4c23 100%)',
         color: 'white', padding: '1rem 0', boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
@@ -150,26 +151,30 @@ const Home = ({ lang }) => {
       </div>
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
-        
-        {/* MODE TABS - Clean government style */}
+
+        {/* MODE TABS */}
         <div style={{
           background: 'white', border: '2px solid #e5e7eb', borderRadius: '12px',
           marginBottom: '2rem', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
         }}>
           <div style={{ display: 'flex', background: '#f8fafc' }}>
-            <button onClick={() => {setMode('sensor'); setLatestPrediction(null);}} 
+            <button onClick={() => { setMode('sensor'); setLatestPrediction(null); }}
               style={{
-                flex: 1, padding: '1.2rem', border: 'none', background: mode === 'sensor' ? '#10b981' : 'transparent',
-                color: mode === 'sensor' ? 'white' : '#374151', fontWeight: mode === 'sensor' ? 700 : 500,
+                flex: 1, padding: '1.2rem', border: 'none',
+                background: mode === 'sensor' ? '#10b981' : 'transparent',
+                color: mode === 'sensor' ? 'white' : '#374151',
+                fontWeight: mode === 'sensor' ? 700 : 500,
                 fontSize: '1.1rem', cursor: 'pointer', transition: 'all 0.2s'
               }}
             >
               📡 Live Sensor Monitoring
             </button>
-            <button onClick={() => {setMode('manual'); setLatestPrediction(null);}} 
+            <button onClick={() => { setMode('manual'); setLatestPrediction(null); }}
               style={{
-                flex: 1, padding: '1.2rem', border: 'none', background: mode === 'manual' ? '#3b82f6' : 'transparent',
-                color: mode === 'manual' ? 'white' : '#374151', fontWeight: mode === 'manual' ? 700 : 500,
+                flex: 1, padding: '1.2rem', border: 'none',
+                background: mode === 'manual' ? '#3b82f6' : 'transparent',
+                color: mode === 'manual' ? 'white' : '#374151',
+                fontWeight: mode === 'manual' ? 700 : 500,
                 fontSize: '1.1rem', cursor: 'pointer', transition: 'all 0.2s'
               }}
             >
@@ -181,7 +186,7 @@ const Home = ({ lang }) => {
         {/* SENSOR MODE */}
         {mode === 'sensor' && (
           <div style={{ display: 'grid', gap: '2rem' }}>
-            
+
             {/* LIVE SENSORS */}
             <div style={{
               background: 'white', border: '2px solid #10b981', borderRadius: '12px',
@@ -191,15 +196,17 @@ const Home = ({ lang }) => {
                 <h2 style={{ margin: 0, color: '#065f46', fontSize: '1.5rem', fontWeight: 700 }}>
                   📡 Real-time Sensor Data
                 </h2>
-                <div style={{ 
-                  padding: '0.5rem 1rem', background: sensors.timestamp ? '#dcfce7' : '#fee2e2',
-                  color: sensors.timestamp ? '#166534' : '#dc2626', borderRadius: '20px', fontSize: '0.9rem'
+                <div style={{
+                  padding: '0.5rem 1rem',
+                  background: sensors.timestamp ? '#dcfce7' : '#fee2e2',
+                  color: sensors.timestamp ? '#166534' : '#dc2626',
+                  borderRadius: '20px', fontSize: '0.9rem'
                 }}>
                   {sensors.timestamp ? 'LIVE' : 'OFFLINE'}
                 </div>
               </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr)', gap: '1.5rem' }}>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
                 <div style={{ textAlign: 'center', padding: '1.5rem' }}>
                   <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#ea580c' }}>
                     {sensors.temperature || 0}°C
@@ -239,12 +246,12 @@ const Home = ({ lang }) => {
                 </div>
               ) : latestPrediction?.crop ? (
                 <div style={{
-                  background: '#f0fdf4', border: '2px solid #bbf7d0', borderRadius: '12px',
-                  padding: '2rem', textAlign: 'center'
+                  background: '#f0fdf4', border: '2px solid #bbf7d0',
+                  borderRadius: '12px', padding: '2rem', textAlign: 'center'
                 }}>
-                  <div style={{ 
-                    fontSize: '3rem', fontWeight: 800, color: '#166534', marginBottom: '1rem',
-                    textTransform: 'uppercase', letterSpacing: '0.1em'
+                  <div style={{
+                    fontSize: '3rem', fontWeight: 800, color: '#166534',
+                    marginBottom: '1rem', textTransform: 'uppercase', letterSpacing: '0.1em'
                   }}>
                     {latestPrediction.crop}
                   </div>
@@ -266,35 +273,28 @@ const Home = ({ lang }) => {
             {/* ACTION BUTTONS */}
             <div style={{
               background: 'white', padding: '2rem', borderRadius: '12px',
-              border: '2px solid #e5e7eb', display: 'flex', gap: '1rem', justifyContent: 'center',
-              flexWrap: 'wrap'
+              border: '2px solid #e5e7eb', display: 'flex', gap: '1rem',
+              justifyContent: 'center', flexWrap: 'wrap'
             }}>
               <button onClick={fetchLatest} style={{
                 padding: '1rem 2rem', background: '#3b82f6', color: 'white',
-                border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer',
-                fontSize: '1rem'
+                border: 'none', borderRadius: '8px', fontWeight: 600,
+                cursor: 'pointer', fontSize: '1rem'
               }}>
                 🔄 Refresh Data
               </button>
-              <button onClick={testSensors} style={{
+              <button onClick={testSensors} disabled={loading} style={{
                 padding: '1rem 2rem', background: '#10b981', color: 'white',
-                border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer',
-                fontSize: '1rem'
-              }} disabled={loading}>
+                border: 'none', borderRadius: '8px', fontWeight: 700,
+                cursor: 'pointer', fontSize: '1rem'
+              }}>
                 {loading ? '⏳ Analyzing...' : '🌾 Get Crop Recommendation'}
               </button>
             </div>
+
           </div>
         )}
 
-      {/* MANUAL MODE */}
-      {mode === 'manual' && (
-        <div style={{ 
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          padding: '40px', borderRadius: '20px', 
-          boxShadow: '0 25px 50px rgba(0,0,0,0.15)', marginBottom: '30px', 
-          position: 'relative', zIndex: 10
-        }}>
         {/* MANUAL MODE */}
         {mode === 'manual' && (
           <div style={{
@@ -302,7 +302,7 @@ const Home = ({ lang }) => {
             border: '2px solid #3b82f6', boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
           }}>
             <h2 style={{ color: '#1e40af', textAlign: 'center', fontSize: '1.6rem', marginBottom: '2rem' }}>
-              Soil Type Based Analysis
+              🌱 Soil Type Based Analysis
             </h2>
             <form onSubmit={handleManualPredict} style={{ maxWidth: '500px', margin: '0 auto' }}>
               <div style={{ marginBottom: '1.5rem' }}>
@@ -324,13 +324,13 @@ const Home = ({ lang }) => {
                   <option value="alluvial">🏔️ Alluvial Soil</option>
                 </select>
               </div>
-              
+
               <div style={{ marginBottom: '2rem' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151' }}>
                   Location / District
                 </label>
                 <input type="text" value={location} onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Enter district/village..." 
+                  placeholder="Enter district/village..."
                   style={{
                     width: '100%', padding: '1rem', border: '2px solid #d1d5db',
                     borderRadius: '8px', fontSize: '1rem', background: 'white'
@@ -343,7 +343,7 @@ const Home = ({ lang }) => {
                 color: 'white', border: 'none', borderRadius: '8px',
                 fontSize: '1.1rem', fontWeight: 600, cursor: 'pointer'
               }}>
-                {loading ? 'Processing...' : 'Get AI Recommendation'}
+                {loading ? 'Processing...' : '🚀 Get AI Recommendation'}
               </button>
             </form>
           </div>
@@ -356,8 +356,8 @@ const Home = ({ lang }) => {
               background: 'white', borderRadius: '12px', overflow: 'hidden',
               boxShadow: '0 10px 40px rgba(0,0,0,0.1)', border: '2px solid #e5e7eb'
             }}>
-              <div style={{ 
-                background: '#f8fafc', padding: '1.5rem', borderBottom: '2px solid #e5e7eb' 
+              <div style={{
+                background: '#f8fafc', padding: '1.5rem', borderBottom: '2px solid #e5e7eb'
               }}>
                 <h3 style={{ margin: 0, color: '#1f2937', fontSize: '1.3rem', fontWeight: 700 }}>
                   📋 Recent Recommendations
@@ -390,7 +390,8 @@ const Home = ({ lang }) => {
             </div>
           </div>
         )}
-      </div>
+
+      </div>{/* closes maxWidth div */}
 
       {/* FOOTER */}
       <div style={{
@@ -402,7 +403,7 @@ const Home = ({ lang }) => {
         </div>
       </div>
 
-      {/* ✅ CHATBOT - Fixed floating bottom-right, receives live state */}
+      {/* CHATBOT */}
       <Chatbot
         mode={mode}
         latestPrediction={latestPrediction}
