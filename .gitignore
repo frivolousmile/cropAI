@@ -21,3 +21,6 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+backend/farmers.db 
+backend/model.pkl 
+backend/__pycache__/ 

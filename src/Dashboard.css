@@ -1,0 +1,51 @@
+.dashboard {
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  color: white;
+  text-align: center;
+}
+
+.sensor-cards {
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.card {
+  background: rgba(255,255,255,0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 2rem;
+  width: 250px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-10px);
+}
+
+.icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.card h1 {
+  font-size: 3.5rem;
+  margin: 0.5rem 0;
+  font-weight: 300;
+}
+
+.card h2 {
+  margin: 0 0 1rem 0;
+  opacity: 0.9;
+}
+.dashboard { padding: 2rem; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: white; text-align: center; }
+.cards { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; margin-top: 2rem; }
+.card { background: rgba(255,255,255,0.15); border-radius: 20px; padding: 2rem; width: 220px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); }
+.icon { font-size: 3rem; margin-bottom: 1rem; }
+.card h1 { font-size: 3rem; margin: 0.5rem 0; font-weight: 300; }
+.card h2 { margin: 0 0 1rem 0; opacity: 0.9; }

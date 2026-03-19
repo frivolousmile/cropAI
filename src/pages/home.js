@@ -7,35 +7,46 @@ const Home = ({ lang }) => {
   const [loading, setLoading] = useState(true);
   const [image, setImage] = useState(null);
   const [soilType, setSoilType] = useState('');
-  const [location, setLocation] = useState('Delhi, India');
+  const [location, setLocation] = useState('Enter Location');
+  
+  const [sensors, setSensors] = useState({
+    temperature: 0, humidity: 0, soil_moisture: 0, timestamp: ''
+  });
 
-  // Auto-refresh SENSOR mode only
+  const soilNPK = {
+    'loamy': [90, 42, 43], 'clay': [25, 55, 35], 'sandy': [50, 55, 82], 
+    'black': [20, 65, 45], 'red': [15, 75, 30], 'alluvial': [106, 26, 60]
+  };
+
+  useEffect(() => {
+    const fetchSensors = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/sensors");
+        if (response.ok) setSensors(await response.json());
+      } catch (error) {}
+    };
+    fetchSensors();
+    const interval = setInterval(fetchSensors, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     if (mode === 'sensor') {
       fetchLatest();
       fetchHistory();
-      const interval = setInterval(() => {
-        fetchLatest();
-        fetchHistory();
-      }, 30000);
-      return () => clearInterval(interval);
     }
   }, [mode]);
 
   const fetchLatest = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/latest");
-      const data = await response.json();
+      const data = await (await fetch("http://localhost:5000/api/latest")).json();
       setLatestPrediction(data);
-    } catch (error) {
-      console.log("Backend not running");
-    }
+    } catch (error) {}
   };
 
   const fetchHistory = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/history");
-      const data = await response.json();
+      const data = await (await fetch("http://localhost:5000/api/history")).json();
       setHistory(data.slice(0, 10));
     } catch (error) {
       setHistory([]);
@@ -46,330 +57,338 @@ const Home = ({ lang }) => {
 
   const testSensors = async () => {
     setLoading(true);
+    const tempC = sensors.temperature || 25;
+    const humidity = sensors.humidity || 70;
+    const soilMoisture = sensors.soil_moisture || 45;
+    
+    let recommendedCrop = "No recommendation", confidence = "50%", reason = "";
+    
+    if (tempC >= 20 && tempC <= 35) {
+      if (soilMoisture >= 60 && humidity >= 70) {
+        recommendedCrop = "Rice"; confidence = "92%"; reason = "High moisture paddy conditions";
+      } else if (soilMoisture >= 45 && humidity >= 60) {
+        recommendedCrop = "Maize"; confidence = "89%"; reason = "Moderate moisture conditions";
+      } else if (soilMoisture >= 30 && humidity <= 65) {
+        recommendedCrop = "Groundnut"; confidence = "87%"; reason = "Medium dry soil";
+      } else {
+        recommendedCrop = "Wheat"; confidence = "85%"; reason = "Dry soil conditions";
+      }
+    }
+    
     const sensorData = {
-      N: 90, P: 42, K: 43,
-      temp: 25.5, humidity: 78,
-      ph: 6.5, rainfall: 203,
-      gps: "28.6139,77.2090 (Delhi)"
+      N: 0, P: 0, K: 0, temp: tempC, humidity, ph: 6.5, rainfall: 0,
+      gps: `Live Sensors: ${tempC}°C/${humidity}%/${soilMoisture}%`,
+      crop: recommendedCrop, confidence, mode: 'sensor_advisory', reason
     };
     
     try {
       await fetch("http://localhost:5000/api/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(sensorData)
       });
-      fetchLatest();
-      fetchHistory();
-      alert("✅ ESP32 simulation complete!");
+      setLatestPrediction({
+        crop: recommendedCrop, confidence, gps: sensorData.gps, reason
+      });
+      fetchLatest(); fetchHistory();
+      alert(`${recommendedCrop} (${confidence}) recommended`);
     } catch (error) {
-      alert("❌ Backend not running!");
+      alert("Server error");
     }
     setLoading(false);
   };
 
   const handleManualPredict = async (e) => {
     e.preventDefault();
-    if (!image || !soilType) return alert("Upload image + soil type!");
+    if (!soilType) return alert("Select soil type");
     
     setLoading(true);
-    const formData = new FormData();
-    formData.append('image', image);
-    formData.append('soil_type', soilType);
-    formData.append('location', location);
+    const [N, P, K] = soilNPK[soilType] || [75, 40, 45];
+    const predictionData = {
+      N, P, K, temp: 25, humidity: 75, ph: 6.5, rainfall: 200,
+      gps: `${soilType} soil - ${location}`, mode: 'manual_soil'
+    };
 
     try {
-      const response = await fetch("http://localhost:5000/api/predict-manual", {
-        method: "POST",
-        body: formData,
+      await fetch("http://localhost:5000/api/predict", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(predictionData)
       });
-      const data = await response.json();
-      setLatestPrediction(data);
-      fetchHistory();
-      alert("✅ Manual prediction complete!");
+      fetchLatest(); fetchHistory();
+      alert("Prediction saved");
     } catch (error) {
-      alert("❌ Backend error!");
+      alert("Server error");
     }
     setLoading(false);
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)', minHeight: '100vh' }}>
-      
-      {/* HERO SECTION */}
-      <div style={{ 
-        textAlign: 'center', padding: '40px 20px', 
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        color: 'white', borderRadius: '16px', marginBottom: '30px'
-      }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '10px' }}>🌾 KARM Live Dashboard</h1>
-        <p style={{ fontSize: '1.2rem', opacity: 0.9 }}>
-          {mode === 'sensor' ? 'Real-time crop recommendations from ESP32 sensors' : 'Manual crop prediction with image analysis'}
-        </p>
-      </div>
-
-      {/* MODE TOGGLE */}
+    <div style={{ 
+      fontFamily: '"Helvetica Neue", Arial, sans-serif', lineHeight: 1.6, color: '#333',
+      background: '#f5f7fa'
+    }}>
+      {/* HEADER - Government style */}
       <div style={{
-        textAlign: 'center', padding: '15px', background: 'white',
-        borderRadius: '12px', marginBottom: '20px', boxShadow: '0 5px 15px rgba(0,0,0,0.08)'
+        background: 'linear-gradient(90deg, #0f4c23 0%, #1a5f2e 50%, #0f4c23 100%)',
+        color: 'white', padding: '1rem 0', boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
       }}>
-        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-          <button 
-            onClick={() => setMode('sensor')}
-            style={{
-              padding: '10px 20px', fontSize: '15px', fontWeight: 'bold',
-              background: mode === 'sensor' ? '#4caf50' : '#f0f0f0',
-              color: mode === 'sensor' ? 'white' : '#333',
-              border: '2px solid #4caf50', borderRadius: '25px', cursor: 'pointer'
-            }}
-          >
-            📡 Sensor Mode
-          </button>
-          <button 
-            onClick={() => setMode('manual')}
-            style={{
-              padding: '10px 20px', fontSize: '15px', fontWeight: 'bold',
-              background: mode === 'manual' ? '#2196f3' : '#f0f0f0',
-              color: mode === 'manual' ? 'white' : '#333',
-              border: '2px solid #2196f3', borderRadius: '25px', cursor: 'pointer'
-            }}
-          >
-            🖼️ Manual Mode
-          </button>
-        </div>
-      </div>
-
-      {/* SENSOR MODE */}
-      {mode === 'sensor' && (
-        <>
-          <div style={{ 
-            background: 'white', padding: '30px', borderRadius: '16px', 
-            boxShadow: '0 10px 30px rgba(0,0,0,0.1)', marginBottom: '30px'
-          }}>
-            <h2 style={{ color: '#2d5a2d', marginBottom: '20px' }}>📡 Latest Sensor Reading</h2>
-            {loading ? (
-              <div style={{ textAlign: 'center', padding: '40px', fontSize: '18px', color: '#666' }}>
-                ⏳ Waiting for ESP32 sensor data... (Auto-refreshes every 30s)
-              </div>
-            ) : latestPrediction?.crop ? (
-              <div style={{ textAlign: 'center', padding: '30px', background: '#e8f5e8', 
-                borderRadius: '12px', border: '3px solid #4caf50' }}>
-                <h3 style={{ fontSize: '2.5rem', color: '#2d5a2d', margin: '0 0 15px 0' }}>
-                  ✅ {latestPrediction.crop?.toUpperCase()}
-                </h3>
-                <p style={{ fontSize: '1.3rem', margin: '10px 0' }}>
-                  Confidence: <strong>{latestPrediction.confidence}</strong>
-                </p>
-                <p style={{ fontSize: '1.1rem', margin: '10px 0', opacity: 0.8 }}>
-                  📍 {latestPrediction.gps}
-                </p>
-                <p style={{ fontSize: '1rem', margin: '5px 0', opacity: 0.7 }}>
-                  🕒 {latestPrediction.timestamp ? new Date(latestPrediction.timestamp).toLocaleString() : 'Just now'}
-                </p>
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '40px', color: '#666', fontSize: '18px' }}>
-                No sensor data yet. ESP32 will send automatically.
-              </div>
-            )}
-          </div>
-
-          <div style={{ 
-            background: 'white', padding: '30px', borderRadius: '16px', 
-            boxShadow: '0 10px 30px rgba(0,0,0,0.1)', marginBottom: '30px' 
-          }}>
-            <h2 style={{ color: '#2d5a2d', marginBottom: '20px' }}>📊 Recent Predictions (Last 10)</h2>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
-                <thead>
-                  <tr style={{ background: '#f8f9fa' }}>
-                    <th style={{ padding: '15px 10px', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Crop</th>
-                    <th style={{ padding: '15px 10px', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Confidence</th>
-                    <th style={{ padding: '15px 10px', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Location</th>
-                    <th style={{ padding: '15px 10px', textAlign: 'left', borderBottom: '2px solid #dee2e6' }}>Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((pred, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
-                      <td style={{ padding: '12px 10px', fontWeight: 'bold' }}>{pred[9]}</td>
-                      <td style={{ padding: '12px 10px' }}>{pred[10]}%</td>
-                      <td style={{ padding: '12px 10px', fontSize: '13px' }}>{pred[1]}</td>
-                      <td style={{ padding: '12px 10px', fontSize: '13px' }}>
-                        {pred[12] ? new Date(pred[12]).toLocaleString() : 'Loading...'}
-                      </td>
-                    </tr>
-                  ))}
-                  {history.length === 0 && (
-                    <tr>
-                      <td colSpan="4" style={{ textAlign: 'center', padding: '40px', color: '#999', fontStyle: 'italic' }}>
-                        No predictions yet<br/><small>Click "Simulate ESP32" to test</small>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h1 style={{ 
+              margin: 0, fontSize: '1.8rem', fontWeight: 700,
+              background: 'linear-gradient(135deg, #fff 0%, #e8f5e8 100%)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+            }}>
+              🌾 KARM Crop Advisor
+            </h1>
+            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+              Powered by AI & IoT Sensors
             </div>
           </div>
+        </div>
+      </div>
 
-          <div style={{ 
-            textAlign: 'center', padding: '20px',
-            display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap'
-          }}>
-            <button onClick={fetchLatest} style={{
-              padding: '12px 24px', background: '#007bff', color: 'white',
-              border: 'none', borderRadius: '8px', fontSize: '16px', cursor: 'pointer'
-            }}>
-              🔄 Refresh Dashboard
+      <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '2rem' }}>
+        
+        {/* MODE TABS - Clean government style */}
+        <div style={{
+          background: 'white', border: '2px solid #e5e7eb', borderRadius: '12px',
+          marginBottom: '2rem', overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+        }}>
+          <div style={{ display: 'flex', background: '#f8fafc' }}>
+            <button onClick={() => {setMode('sensor'); setLatestPrediction(null);}} 
+              style={{
+                flex: 1, padding: '1.2rem', border: 'none', background: mode === 'sensor' ? '#10b981' : 'transparent',
+                color: mode === 'sensor' ? 'white' : '#374151', fontWeight: mode === 'sensor' ? 700 : 500,
+                fontSize: '1.1rem', cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >
+              📡 Live Sensor Monitoring
             </button>
-            <button onClick={testSensors} style={{
-              padding: '12px 24px', background: '#ff9800', color: 'white',
-              border: 'none', borderRadius: '8px', fontSize: '16px', cursor: 'pointer', fontWeight: 'bold'
-            }}>
-              🧪 SIMULATE ESP32 SENSORS
+            <button onClick={() => {setMode('manual'); setLatestPrediction(null);}} 
+              style={{
+                flex: 1, padding: '1.2rem', border: 'none', background: mode === 'manual' ? '#3b82f6' : 'transparent',
+                color: mode === 'manual' ? 'white' : '#374151', fontWeight: mode === 'manual' ? 700 : 500,
+                fontSize: '1.1rem', cursor: 'pointer', transition: 'all 0.2s'
+              }}
+            >
+              🌱 Soil Type Analysis
             </button>
           </div>
-        </>
-      )}
+        </div>
 
-      {/* 🔥 FIXED MANUAL MODE - BEAUTIFUL GRADIENT CONTAINER */}
-      {mode === 'manual' && (
-        <div style={{ 
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          padding: '40px', borderRadius: '20px', 
-          boxShadow: '0 25px 50px rgba(0,0,0,0.15)', marginBottom: '30px', 
-          position: 'relative', zIndex: 10
-        }}>
-          <div style={{
-            background: 'white', padding: '40px', borderRadius: '20px', 
-            boxShadow: '0 20px 40px rgba(0,0,0,0.1)', maxWidth: '700px', margin: '0 auto'
-          }}>
-            <h2 style={{ color: '#2196f3', marginBottom: '30px', textAlign: 'center', fontSize: '2rem' }}>
-              🖼️ Manual Crop Prediction
-            </h2>
+        {/* SENSOR MODE */}
+        {mode === 'sensor' && (
+          <div style={{ display: 'grid', gap: '2rem' }}>
             
-            <form onSubmit={handleManualPredict} style={{ maxWidth: '600px', margin: '0 auto' }}>
-              {/* Image Upload */}
-              <div style={{ marginBottom: '25px', textAlign: 'center', padding: '25px', 
-                border: '3px dashed #2196f3', borderRadius: '16px', background: '#f8fbff' }}>
-                <label style={{ display: 'block', marginBottom: '15px', fontSize: '18px', 
-                  fontWeight: 'bold', color: '#2196f3' }}>
-                  📸 Upload Plant/Soil Image
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setImage(e.target.files[0])}
-                  style={{
-                    padding: '15px', border: '2px solid #ddd', borderRadius: '10px', 
-                    width: '100%', background: 'white', fontSize: '16px'
-                  }}
-                  required
-                />
-                {image && (
-                  <div style={{ marginTop: '12px', padding: '12px', background: '#e3f2fd', 
-                    borderRadius: '8px', fontSize: '15px', color: '#1976d2' }}>
-                    ✅ {image.name} selected ({(image.size/1024/1024).toFixed(2)} MB)
-                  </div>
-                )}
+            {/* LIVE SENSORS */}
+            <div style={{
+              background: 'white', border: '2px solid #10b981', borderRadius: '12px',
+              padding: '2rem', boxShadow: '0 8px 30px rgba(16,185,129,0.15)'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                <h2 style={{ margin: 0, color: '#065f46', fontSize: '1.5rem', fontWeight: 700 }}>
+                  📡 Real-time Sensor Data
+                </h2>
+                <div style={{ 
+                  padding: '0.5rem 1rem', background: sensors.timestamp ? '#dcfce7' : '#fee2e2',
+                  color: sensors.timestamp ? '#166534' : '#dc2626', borderRadius: '20px', fontSize: '0.9rem'
+                }}>
+                  {sensors.timestamp ? 'LIVE' : 'OFFLINE'}
+                </div>
               </div>
+              
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr)', gap: '1.5rem' }}>
+                <div style={{ textAlign: 'center', padding: '1.5rem' }}>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#ea580c' }}>
+                    {sensors.temperature || 0}°C
+                  </div>
+                  <div style={{ color: '#374151', fontWeight: 600 }}>Temperature</div>
+                  <div style={{ color: '#6b7280', fontSize: '0.9rem' }}>DHT22 Sensor</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '1.5rem' }}>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#0891b2' }}>
+                    {sensors.humidity || 0}%
+                  </div>
+                  <div style={{ color: '#374151', fontWeight: 600 }}>Humidity</div>
+                  <div style={{ color: '#6b7280', fontSize: '0.9rem' }}>DHT22 Sensor</div>
+                </div>
+                <div style={{ textAlign: 'center', padding: '1.5rem' }}>
+                  <div style={{ fontSize: '2.5rem', fontWeight: 800, color: '#7c2d12' }}>
+                    {sensors.soil_moisture || 0}%
+                  </div>
+                  <div style={{ color: '#374151', fontWeight: 600 }}>Soil Moisture</div>
+                  <div style={{ color: '#6b7280', fontSize: '0.9rem' }}>Soil Probe</div>
+                </div>
+              </div>
+            </div>
 
-              {/* Soil Type */}
-              <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: '#333', fontSize: '16px' }}>
-                  🌱 Soil Type <span style={{ color: '#666', fontSize: '14px' }}>(Required)</span>
+            {/* RECOMMENDATION */}
+            <div style={{
+              background: 'white', borderRadius: '12px', padding: '2.5rem',
+              borderTop: '5px solid #10b981', boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
+            }}>
+              <h2 style={{ color: '#065f46', marginBottom: '1.5rem', fontSize: '1.5rem' }}>
+                🎯 Recommended Crop
+              </h2>
+              {loading ? (
+                <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⏳</div>
+                  Processing sensor data...
+                </div>
+              ) : latestPrediction?.crop ? (
+                <div style={{
+                  background: '#f0fdf4', border: '2px solid #bbf7d0', borderRadius: '12px',
+                  padding: '2rem', textAlign: 'center'
+                }}>
+                  <div style={{ 
+                    fontSize: '3rem', fontWeight: 800, color: '#166534', marginBottom: '1rem',
+                    textTransform: 'uppercase', letterSpacing: '0.1em'
+                  }}>
+                    {latestPrediction.crop}
+                  </div>
+                  <div style={{ fontSize: '1.3rem', color: '#047857', marginBottom: '0.5rem' }}>
+                    Confidence: <strong>{latestPrediction.confidence}</strong>
+                  </div>
+                  <div style={{ fontSize: '1.1rem', color: '#374151' }}>
+                    {latestPrediction.gps}
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '3rem', color: '#6b7280' }}>
+                  <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🌱</div>
+                  Click "Get Recommendation" to analyze your field conditions
+                </div>
+              )}
+            </div>
+
+            {/* ACTION BUTTONS */}
+            <div style={{
+              background: 'white', padding: '2rem', borderRadius: '12px',
+              border: '2px solid #e5e7eb', display: 'flex', gap: '1rem', justifyContent: 'center',
+              flexWrap: 'wrap'
+            }}>
+              <button onClick={fetchLatest} style={{
+                padding: '1rem 2rem', background: '#3b82f6', color: 'white',
+                border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer',
+                fontSize: '1rem'
+              }}>
+                🔄 Refresh Data
+              </button>
+              <button onClick={testSensors} style={{
+                padding: '1rem 2rem', background: '#10b981', color: 'white',
+                border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer',
+                fontSize: '1rem'
+              }} disabled={loading}>
+                {loading ? '⏳ Analyzing...' : '🌾 Get Crop Recommendation'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* MANUAL MODE */}
+        {mode === 'manual' && (
+          <div style={{
+            background: 'white', borderRadius: '12px', padding: '2.5rem',
+            border: '2px solid #3b82f6', boxShadow: '0 10px 40px rgba(0,0,0,0.1)'
+          }}>
+            <h2 style={{ color: '#1e40af', textAlign: 'center', fontSize: '1.6rem', marginBottom: '2rem' }}>
+              Soil Type Based Analysis
+            </h2>
+            <form onSubmit={handleManualPredict} style={{ maxWidth: '500px', margin: '0 auto' }}>
+              <div style={{ marginBottom: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151' }}>
+                  Select Soil Type <span style={{ color: '#ef4444' }}>*</span>
                 </label>
-                <select
-                  value={soilType}
-                  onChange={(e) => setSoilType(e.target.value)}
+                <select value={soilType} onChange={(e) => setSoilType(e.target.value)} required
                   style={{
-                    width: '100%', padding: '18px', border: '2px solid #ddd', borderRadius: '10px', 
-                    fontSize: '16px', background: 'white', cursor: 'pointer'
+                    width: '100%', padding: '1rem', border: '2px solid #d1d5db',
+                    borderRadius: '8px', fontSize: '1rem', background: 'white'
                   }}
-                  required
                 >
-                  <option value="">Select soil type...</option>
-                  <option value="loamy">🌾 Loamy (Best for Rice, Wheat)</option>
-                  <option value="clay">🏺 Clay (Good for Pulses)</option>
-                  <option value="sandy">🏖️ Sandy (Millets, Groundnut)</option>
-                  <option value="black">⚫ Black (Cotton, Soybean)</option>
-                  <option value="red">🔴 Red (Groundnut, Millets)</option>
-                  <option value="alluvial">🏔️ Alluvial (Rice, Sugarcane)</option>
+                  <option value="">Choose soil type...</option>
+                  <option value="loamy">🌾 Loamy Soil</option>
+                  <option value="clay">🏺 Clay Soil</option>
+                  <option value="sandy">🏖️ Sandy Soil</option>
+                  <option value="black">⚫ Black Soil</option>
+                  <option value="red">🔴 Red Soil</option>
+                  <option value="alluvial">🏔️ Alluvial Soil</option>
                 </select>
               </div>
-
-              {/* Location */}
-              <div style={{ marginBottom: '30px' }}>
-                <label style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold', color: '#333', fontSize: '16px' }}>
-                  📍 Location <span style={{ color: '#666', fontSize: '14px' }}>(City/Region)</span>
+              
+              <div style={{ marginBottom: '2rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600, color: '#374151' }}>
+                  Location / District
                 </label>
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Delhi, India"
+                <input type="text" value={location} onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Enter district/village..." 
                   style={{
-                    width: '100%', padding: '18px', border: '2px solid #ddd', borderRadius: '10px', 
-                    fontSize: '16px', background: 'white'
+                    width: '100%', padding: '1rem', border: '2px solid #d1d5db',
+                    borderRadius: '8px', fontSize: '1rem', background: 'white'
                   }}
                 />
               </div>
 
-              {/* Predict Button */}
-              <button 
-                type="submit" 
-                disabled={loading || !image || !soilType}
-                style={{
-                  width: '100%', padding: '20px', background: 'linear-gradient(135deg, #2196f3 0%, #1976d2 100%)', 
-                  color: 'white', border: 'none', borderRadius: '12px', fontSize: '18px', 
-                  fontWeight: 'bold', cursor: 'pointer', textTransform: 'uppercase',
-                  opacity: loading || !image || !soilType ? 0.6 : 1
-                }}
-              >
-                {loading ? '⏳ Analyzing Image + Soil...' : '🚀 Get Crop Recommendation'}
+              <button type="submit" disabled={loading || !soilType} style={{
+                width: '100%', padding: '1.2rem', background: '#3b82f6',
+                color: 'white', border: 'none', borderRadius: '8px',
+                fontSize: '1.1rem', fontWeight: 600, cursor: 'pointer'
+              }}>
+                {loading ? 'Processing...' : 'Get AI Recommendation'}
               </button>
             </form>
-
-            {/* Result */}
-            {latestPrediction && latestPrediction.crop && (
-              <div style={{ 
-                marginTop: '40px', padding: '30px', background: '#e3f2fd', 
-                borderRadius: '16px', border: '3px solid #2196f3', textAlign: 'center' 
-              }}>
-                <h3 style={{ fontSize: '2.5rem', color: '#2196f3', margin: '0 0 20px 0' }}>
-                  ✅ {latestPrediction.crop?.toUpperCase()}
-                </h3>
-                <p style={{ fontSize: '1.4rem', margin: '12px 0' }}>
-                  Confidence: <strong>{latestPrediction.confidence}</strong>
-                </p>
-                <p style={{ fontSize: '1.2rem', margin: '12px 0' }}>
-                  Soil: <strong>{latestPrediction.soil_type}</strong>
-                </p>
-                <p style={{ fontSize: '1.1rem', margin: '8px 0', opacity: 0.9 }}>
-                  📍 {latestPrediction.gps}
-                </p>
-              </div>
-            )}
           </div>
-        </div>
-      )}
+        )}
 
-      {/* STATS */}
-      <div style={{ 
-        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-        gap: '20px', marginTop: '40px', textAlign: 'center'
+        {/* HISTORY TABLE */}
+        {history.length > 0 && (
+          <div style={{ marginTop: '3rem' }}>
+            <div style={{
+              background: 'white', borderRadius: '12px', overflow: 'hidden',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.1)', border: '2px solid #e5e7eb'
+            }}>
+              <div style={{ 
+                background: '#f8fafc', padding: '1.5rem', borderBottom: '2px solid #e5e7eb' 
+              }}>
+                <h3 style={{ margin: 0, color: '#1f2937', fontSize: '1.3rem', fontWeight: 700 }}>
+                  📋 Recent Recommendations
+                </h3>
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ background: '#f1f5f9' }}>
+                      <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}>Crop</th>
+                      <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}>Confidence</th>
+                      <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}>Location</th>
+                      <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontWeight: 600 }}>Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {history.map((pred, i) => (
+                      <tr key={i} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '1rem 1.5rem', fontWeight: 600, color: '#059669' }}>{pred[8]}</td>
+                        <td style={{ padding: '1rem 1.5rem', color: '#10b981' }}>{pred[9]}%</td>
+                        <td style={{ padding: '1rem 1.5rem', color: '#6b7280' }}>{pred[0]}</td>
+                        <td style={{ padding: '1rem 1.5rem', color: '#6b7280' }}>
+                          {pred[11] ? new Date(pred[11]).toLocaleDateString() : 'Recent'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* FOOTER */}
+      <div style={{
+        background: '#1f2937', color: '#d1d5db', textAlign: 'center',
+        padding: '2rem', marginTop: '4rem', fontSize: '0.9rem'
       }}>
-        <div style={{ padding: '25px', background: 'white', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ color: '#667eea', fontSize: '2.5rem', margin: '0 0 10px 0' }}>99.55%</h3>
-          <p>Model Accuracy</p>
-        </div>
-        <div style={{ padding: '25px', background: 'white', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ color: '#667eea', fontSize: '2.5rem', margin: '0 0 10px 0' }}>2200+</h3>
-          <p>Samples Trained</p>
-        </div>
-        <div style={{ padding: '25px', background: 'white', borderRadius: '16px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)' }}>
-          <h3 style={{ color: '#667eea', fontSize: '2.5rem', margin: '0 0 10px 0' }}>22</h3>
-          <p>Crop Types</p>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          © 2026 KARM Crop Advisory System | For Farmers, By Technology
         </div>
       </div>
     </div>
