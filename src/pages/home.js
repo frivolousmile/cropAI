@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import Chatbot from "../components/Chatbot";
+import "../components/chatbot.css";
 
 const Home = ({ lang }) => {
   const [mode, setMode] = useState('sensor');
@@ -285,6 +287,14 @@ const Home = ({ lang }) => {
           </div>
         )}
 
+      {/* MANUAL MODE */}
+      {mode === 'manual' && (
+        <div style={{ 
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          padding: '40px', borderRadius: '20px', 
+          boxShadow: '0 25px 50px rgba(0,0,0,0.15)', marginBottom: '30px', 
+          position: 'relative', zIndex: 10
+        }}>
         {/* MANUAL MODE */}
         {mode === 'manual' && (
           <div style={{
@@ -391,6 +401,15 @@ const Home = ({ lang }) => {
           © 2026 KARM Crop Advisory System | For Farmers, By Technology
         </div>
       </div>
+
+      {/* ✅ CHATBOT - Fixed floating bottom-right, receives live state */}
+      <Chatbot
+        mode={mode}
+        latestPrediction={latestPrediction}
+        history={history}
+        location={location}
+      />
+
     </div>
   );
 };
